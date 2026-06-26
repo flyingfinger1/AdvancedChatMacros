@@ -40,7 +40,7 @@ public class AdvancedChatMacros implements ClientModInitializer {
         if (format != null) {
             component = component.withStyle(format);
         }
-        Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(component);
+        Minecraft.getInstance().gui.getChat().addClientSystemMessage(component);
     }
 
     /**
