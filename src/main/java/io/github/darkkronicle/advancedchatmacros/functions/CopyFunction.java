@@ -7,7 +7,7 @@ import io.github.darkkronicle.Konstruct.parser.IntRange;
 import io.github.darkkronicle.Konstruct.parser.ParseContext;
 import io.github.darkkronicle.Konstruct.parser.Result;
 import io.github.darkkronicle.advancedchatmacros.config.KeybindManager;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 import java.util.List;
 
@@ -23,7 +23,8 @@ public class CopyFunction implements NamedFunction {
         Result res = Function.parseArgument(context, input, 0);
         if (Function.shouldReturn(res)) return res;
         if (!KeybindManager.SETTING_UP) {
-            MinecraftClient.getInstance().keyboard.setClipboard(res.getContent().getString());
+            // 26.2: MinecraftClient.keyboard -> Minecraft.keyboardHandler
+            Minecraft.getInstance().keyboardHandler.setClipboard(res.getContent().getString());
         }
         return Result.success("");
     }

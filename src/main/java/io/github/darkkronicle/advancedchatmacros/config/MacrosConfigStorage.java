@@ -21,7 +21,6 @@ import io.github.darkkronicle.advancedchatmacros.config.options.TomlOption;
 import io.github.darkkronicle.advancedchatmacros.util.TomlUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import org.apache.logging.log4j.Level;
 
 @Environment(EnvType.CLIENT)
 public class MacrosConfigStorage implements IConfigHandler {
@@ -48,13 +47,13 @@ public class MacrosConfigStorage implements IConfigHandler {
 
     public static void loadFromFile() {
 
-        File configFile = FileUtils.getConfigDirectory().toPath().resolve("advancedchat").resolve(AdvancedChatMacros.MOD_ID).resolve(CONFIG_FILE_NAME).toFile();
+        File configFile = FileUtils.getConfigDirectory().resolve("advancedchat").resolve(AdvancedChatMacros.MOD_ID).resolve(CONFIG_FILE_NAME).toFile();
         if (!configFile.exists()) {
             try {
                 org.apache.commons.io.FileUtils.copyInputStreamToFile(AdvancedChatCore.getResource("default_config.toml"), configFile);
-                AdvancedChatMacros.LOGGER.log(Level.INFO, "default_config.toml was successfully created!");
+                AdvancedChatMacros.LOGGER.info("default_config.toml was successfully created!");
             } catch (IOException | URISyntaxException e) {
-                AdvancedChatMacros.LOGGER.log(Level.WARN, "Default configuration failed to copy! No comments will be present in the file.", e);
+                AdvancedChatMacros.LOGGER.warn("Default configuration failed to copy! No comments will be present in the file.", e);
             }
             return;
         }
@@ -70,7 +69,7 @@ public class MacrosConfigStorage implements IConfigHandler {
                 try {
                     option.config.setValueFromToml(config.getOptional(Arrays.asList(General.NAME, option.key)));
                 } catch (ClassCastException e) {
-                    AdvancedChatMacros.LOGGER.log(Level.WARN, "Error getting value " + option.key, e);
+                    AdvancedChatMacros.LOGGER.warn("Error getting value " + option.key, e);
                 }
             }
             config.close();
@@ -78,7 +77,7 @@ public class MacrosConfigStorage implements IConfigHandler {
     }
 
     public static void saveFromFile() {
-        File dir = FileUtils.getConfigDirectory().toPath().resolve("advancedchat").resolve(AdvancedChatMacros.MOD_ID).toFile();
+        File dir = FileUtils.getConfigDirectory().resolve("advancedchat").resolve(AdvancedChatMacros.MOD_ID).toFile();
 
         if ((dir.exists() && dir.isDirectory()) || dir.mkdirs()) {
             File file = dir.toPath().resolve(CONFIG_FILE_NAME).toFile();

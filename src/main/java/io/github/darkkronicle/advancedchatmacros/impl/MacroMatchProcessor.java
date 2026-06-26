@@ -19,16 +19,15 @@ import io.github.darkkronicle.advancedchatcore.interfaces.IJsonApplier;
 import io.github.darkkronicle.advancedchatcore.interfaces.IMatchProcessor;
 import io.github.darkkronicle.advancedchatcore.interfaces.IScreenSupplier;
 import io.github.darkkronicle.advancedchatcore.konstruct.StringMatchObject;
-import io.github.darkkronicle.advancedchatcore.util.FluidText;
 import io.github.darkkronicle.advancedchatcore.util.SearchResult;
 import io.github.darkkronicle.advancedchatcore.util.StringMatch;
 import io.github.darkkronicle.advancedchatcore.util.SyncTaskQueue;
 import io.github.darkkronicle.advancedchatmacros.AdvancedChatMacros;
 import io.github.darkkronicle.advancedchatmacros.config.MacrosConfigStorage;
 import io.github.darkkronicle.advancedchatmacros.filter.KonstructFilter;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import org.apache.logging.log4j.Level;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -60,7 +59,7 @@ public class MacroMatchProcessor implements IMatchProcessor, IScreenSupplier, IJ
     }
 
     @Override
-    public Result processMatches(FluidText text, @Nullable FluidText unfiltered, @Nullable SearchResult search) {
+    public Result processMatches(Component text, @Nullable Component unfiltered, @Nullable SearchResult search) {
         reloadNode();
         NodeProcessor processor = KonstructFilter.getInstance().getProcessor().copy();
         processor.addVariable("input", text.getString());
@@ -71,17 +70,20 @@ public class MacroMatchProcessor implements IMatchProcessor, IScreenSupplier, IJ
         processor.addVariable("matches", Variable.of(new ListObject(matches)));
         String message = processor.parse(node).getResult().getContent().getString();
         if (MacrosConfigStorage.General.PREVENT_MACRO_RECURSION.config.getBooleanValue() && search.getFinder() != null && search.getFinder().isMatch(message, search.getSearch())) {
-            AdvancedChatMacros.LOGGER.log(Level.WARN, "Auto message stopped to prevent recursion!");
+            AdvancedChatMacros.LOGGER.warn("Auto message stopped to prevent recursion!");
             // We say it was a success so nothing bad happens
             return Result.getFromBool(true);
         }
+        // 26.2: ClientPlayerEntity.sendChatMessage dispatched commands ('/') vs chat itself; that
+        // split is now sendCommand/sendChat — sendCommandOrChat restores the old behaviour so that a
+        // macro emitting "/cmd" actually runs the command instead of printing it as chat.
         if (delay.config.getIntegerValue() == 0) {
-            MinecraftClient.getInstance().player.sendChatMessage(message);
+            AdvancedChatMacros.sendCommandOrChat(message);
             return Result.getFromBool(true);
         }
         SyncTaskQueue.getInstance().add(delay.config.getIntegerValue(), () -> {
-            if (MinecraftClient.getInstance().player != null) {
-                MinecraftClient.getInstance().player.sendChatMessage(message);
+            if (Minecraft.getInstance().player != null) {
+                AdvancedChatMacros.sendCommandOrChat(message);
             }
         });
         return Result.getFromBool(true);
@@ -98,7 +100,7 @@ public class MacroMatchProcessor implements IMatchProcessor, IScreenSupplier, IJ
                 node = new InputNodeBuilder(command.config.getStringValue()).build();
             }
         } catch (NodeException e) {
-            AdvancedChatMacros.LOGGER.log(Level.WARN, "Error setting up macro processor!", e);
+            AdvancedChatMacros.LOGGER.warn("Error setting up macro processor!", e);
             node = new NodeBuilder("").build();
         }
         old = command.config.getStringValue();

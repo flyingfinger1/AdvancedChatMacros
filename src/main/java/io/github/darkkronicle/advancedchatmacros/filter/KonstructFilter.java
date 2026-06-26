@@ -12,7 +12,7 @@ import io.github.darkkronicle.advancedchatcore.interfaces.IStringFilter;
 import io.github.darkkronicle.advancedchatcore.konstruct.AdvancedChatKonstruct;
 import io.github.darkkronicle.advancedchatmacros.config.MacrosConfigStorage;
 import lombok.Getter;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -29,7 +29,7 @@ public class KonstructFilter implements IStringFilter {
     }
 
     private KonstructFilter() {
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         processor = AdvancedChatKonstruct.getInstance().copy();
 
         addDoubleProperty(processor, "x", () -> client.player.getX());

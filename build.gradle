@@ -1,132 +1,80 @@
-import javax.net.ssl.HttpsURLConnection
-import java.nio.file.Files
-
 plugins {
-	id 'fabric-loom' version '0.10.+'
-	id 'maven-publish'
-	id "io.freefair.lombok" version "6.0.0-m2"
+    id 'net.fabricmc.fabric-loom' version '1.17.12'
+    id 'maven-publish'
 }
 
-sourceCompatibility = JavaVersion.VERSION_17
-targetCompatibility = JavaVersion.VERSION_17
-
-archivesBaseName = project.archives_base_name
-version = "${project.minecraft_version}-${project.mod_version}"
+version = project.mod_version
 group = project.maven_group
 
-Properties additionalProperties = new Properties()
-if (file("extra.properties").exists()) {
-	additionalProperties.load(file("extra.properties").newReader())
+base {
+    archivesName = project.archives_base_name
 }
 
+def javaVersion = JavaVersion.toVersion(project.javaVersion)
+
 repositories {
-	mavenCentral()
-	maven { url 'https://masa.dy.fi/maven' }
-	maven { url 'https://jitpack.io' }
+    // Our refurbished AdvancedChatCore / AdvancedChatFilters, published locally.
+    mavenLocal()
+    mavenCentral()
+    maven { name = 'FabricMC'; url = 'https://maven.fabricmc.net/' }
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
+    maven { name = 'JitPack'; url = 'https://jitpack.io' }
 }
 
 dependencies {
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-	modImplementation "fi.dy.masa.malilib:malilib-fabric-1.18.2:${project.malilib_version}"
-	modImplementation "com.github.DarkKronicle:AdvancedChatCore:${project.advancedchat_version}"
-	// We use API here so it doesn't override AdvancedChatCore
-	modApi "com.github.DarkKronicle:AdvancedChatFilters:1.1.1-build2"
+    // 26.x ships unobfuscated — no Yarn/Mojang mappings, Loom does not remap.
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+    implementation "maven.modrinth:malilib:${project.malilib_version}"
+
+    // AdvancedChatCore (required) and AdvancedChatFilters (optional integration, loaded only if
+    // present at runtime) — both from mavenLocal.
+    implementation "io.github.darkkronicle:AdvancedChatCore:${project.advancedchat_version}"
+    implementation "io.github.darkkronicle:AdvancedChatFilters:${project.filters_version}"
+
+    // Konstruct (templating) + NightConfig (TOML) — bundled by AdvancedChatCore at runtime, needed
+    // here at compile time.
+    implementation "com.github.DarkKronicle.Konstruct:core:${project.konstruct_version}"
+    implementation "com.electronwill.night-config:core:${project.nightconfig_version}"
+    implementation "com.electronwill.night-config:toml:${project.nightconfig_version}"
+
+    compileOnly "org.projectlombok:lombok:${project.lombok_version}"
+    annotationProcessor "org.projectlombok:lombok:${project.lombok_version}"
 }
 
 processResources {
-	inputs.property "version", project.version
+    inputs.property 'version', project.version
 
-	filesMatching("fabric.mod.json") {
-		expand "version": project.version
-	}
+    filesMatching('fabric.mod.json') {
+        expand 'version': project.version
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.encoding = "UTF-8"
-	it.options.release = 17
+    it.options.encoding = 'UTF-8'
+    it.options.release = Integer.parseInt(project.javaVersion)
 }
 
-// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-// if it is present.
-// If you remove this task, sources will not be generated.
-task sourcesJar(type: Jar, dependsOn: classes) {
-	classifier = "sources"
-	from sourceSets.main.allSource
+java {
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    withSourcesJar()
 }
 
 jar {
-	from "LICENSE"
+    from 'LICENSE'
 }
 
-// configure the maven publication
 publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			// add all the jars that should be included when publishing to maven
-			artifact(remapJar) {
-				builtBy remapJar
-			}
-			artifact(sourcesJar) {
-				builtBy remapSourcesJar
-			}
-		}
-	}
-
-	// select the repositories you want to publish to
-	repositories {
-		// uncomment to publish to the local maven
-		// mavenLocal()
-	}
-}
-
-task discord {
-	dependsOn build
-
-	doLast {
-		String webhook
-		if (additionalProperties["discord_webhook"] != null) {
-			webhook = additionalProperties["discord_webhook"]
-		} else if (System.getenv("discord_webhook") != null) {
-			webhook = System.getenv("discord_webhook")
-		} else {
-			System.out.println("No webhook found...")
-			return
-		}
-
-		File file = remapJar.archiveFile.get().asFile
-		String commitHash = 'git rev-parse --verify --short HEAD'.execute().text.trim()
-		String fileName = "$project.archives_base_name}-${project.mod_version}-${commitHash}.jar"
-		String text = "<:Kronos:799707832399691867> **${project.archives_base_name} v${project.mod_version}-${commitHash} for ${project.minecraft_version}**"
-		URL url = new URL(webhook)
-		HttpsURLConnection connection = (HttpsURLConnection) url.openConnection()
-
-		def cmdLine = "git log --format=%B -n 1"
-		def procCommit = cmdLine.execute()
-		String changeLog = procCommit.in.getText()
-		text = text + "\n" + changeLog
-
-		String boundary = UUID.randomUUID().toString()
-		connection.setRequestMethod("POST")
-		connection.setDoOutput(true)
-		connection.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary)
-		DataOutputStream stream = new DataOutputStream(connection.getOutputStream());
-
-		stream.writeBytes("--" + boundary + "\r\n")
-		stream.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"" + fileName + "\"\r\n\r\n")
-		stream.write(Files.readAllBytes(file.toPath()))
-		stream.writeBytes("\r\n")
-		stream.writeBytes("--" + boundary + "\r\n");
-		stream.writeBytes('Content-Disposition: form-data; name="content"\r\n\r\n' + text + '\r\n')
-		stream.writeBytes("--" + boundary + "--\r\n")
-
-		stream.flush()
-		stream.close()
-
-		connection.getInputStream().close()
-		connection.disconnect()
-	}
-
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
 }

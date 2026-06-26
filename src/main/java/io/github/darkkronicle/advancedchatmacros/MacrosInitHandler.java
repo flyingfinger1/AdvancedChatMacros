@@ -1,26 +1,19 @@
 package io.github.darkkronicle.advancedchatmacros;
 
-import com.mojang.brigadier.tree.CommandNode;
 import fi.dy.masa.malilib.config.ConfigManager;
 import fi.dy.masa.malilib.event.InputEventHandler;
 import fi.dy.masa.malilib.interfaces.IInitializationHandler;
 import io.github.darkkronicle.advancedchatcore.ModuleHandler;
 import io.github.darkkronicle.advancedchatcore.chat.MessageSender;
-import io.github.darkkronicle.advancedchatcore.config.CommandsHandler;
 import io.github.darkkronicle.advancedchatmacros.config.KeybindManager;
 import io.github.darkkronicle.advancedchatmacros.config.MacrosConfigStorage;
 import io.github.darkkronicle.advancedchatmacros.filter.KonstructFilter;
 import io.github.darkkronicle.advancedchatmacros.filter.MatchFilterHandler;
 import io.github.darkkronicle.advancedchatmacros.impl.FiltersImpl;
-import io.github.darkkronicle.kommandlib.CommandManager;
-import io.github.darkkronicle.kommandlib.command.ClientCommand;
-import io.github.darkkronicle.kommandlib.util.CommandUtil;
-import io.github.darkkronicle.kommandlib.util.InfoUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.util.Formatting;
-import org.apache.logging.log4j.Level;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 
 import java.util.Optional;
 
@@ -43,12 +36,17 @@ public class MacrosInitHandler implements IInitializationHandler {
         });
         MessageSender.getInstance().addFilter(KonstructFilter.getInstance());
 
-        try {
-            CommandNode<ServerCommandSource> node = CommandsHandler.getInstance().getOrCreateSubs("macros");
-            node.addChild(CommandUtil.literal("reloadToml").executes(ClientCommand.of((context) -> AdvancedChatMacros.reloadFilters(true))).build());
-        } catch (Exception e) {
-            AdvancedChatMacros.LOGGER.log(Level.WARN, "Could not set up command!");
-        }
+        // KommandLib (DarkKronicle's old client-command lib) and Core's CommandsHandler no longer
+        // exist on 26.x, so register the command directly through Fabric's client command API.
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
+                dispatcher.register(
+                        // 26.2: fabric command-api-v2 3.1.0 renamed ClientCommandManager -> ClientCommands
+                        ClientCommands.literal("acmacros")
+                                .then(ClientCommands.literal("reloadToml")
+                                        .executes(context -> {
+                                            AdvancedChatMacros.reloadFilters(true);
+                                            return 1;
+                                        }))));
 
         MatchFilterHandler.getInstance().load();
         MessageSender.getInstance().addFilter(MatchFilterHandler.getInstance());

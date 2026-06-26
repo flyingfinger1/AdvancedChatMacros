@@ -20,7 +20,6 @@ import io.github.darkkronicle.advancedchatmacros.functions.CommandFunction;
 import io.github.darkkronicle.advancedchatmacros.functions.CopyFunction;
 import io.github.darkkronicle.advancedchatmacros.functions.InfoFunction;
 import io.github.darkkronicle.advancedchatmacros.functions.SuggestCommandFunction;
-import org.apache.logging.log4j.Level;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,9 +40,9 @@ public class KeybindManager implements IKeybindProvider, IKeyboardInputHandler, 
     public static boolean SETTING_UP = true;
 
     private List<CommandKeybind> keybinds = new ArrayList<>();
-    private File configDirectory = FileUtils.getConfigDirectory().toPath().resolve("advancedchat").resolve(AdvancedChatMacros.MOD_ID).toFile();
-    private File keyBindFile = FileUtils.getConfigDirectory().toPath().resolve("advancedchat").resolve(AdvancedChatMacros.MOD_ID).resolve("keybinds.knst").toFile();
-    private File exampleKeybinds = FileUtils.getConfigDirectory().toPath().resolve("advancedchat").resolve(AdvancedChatMacros.MOD_ID).resolve("example_keybinds.knst").toFile();
+    private File configDirectory = FileUtils.getConfigDirectory().resolve("advancedchat").resolve(AdvancedChatMacros.MOD_ID).toFile();
+    private File keyBindFile = FileUtils.getConfigDirectory().resolve("advancedchat").resolve(AdvancedChatMacros.MOD_ID).resolve("keybinds.knst").toFile();
+    private File exampleKeybinds = FileUtils.getConfigDirectory().resolve("advancedchat").resolve(AdvancedChatMacros.MOD_ID).resolve("example_keybinds.knst").toFile();
 
     public void load() {
         keybinds.clear();
@@ -55,9 +54,9 @@ public class KeybindManager implements IKeybindProvider, IKeyboardInputHandler, 
             // Copy examples if filters and the example filters don't exist
             try {
                 org.apache.commons.io.FileUtils.copyInputStreamToFile(AdvancedChatCore.getResource("example_keybinds.knst"), exampleKeybinds);
-                AdvancedChatMacros.LOGGER.log(Level.INFO, "example_keybinds.knst was successfully created!");
+                AdvancedChatMacros.LOGGER.info("example_keybinds.knst was successfully created!");
             } catch (IOException | URISyntaxException e) {
-                AdvancedChatMacros.LOGGER.log(Level.WARN, "Example Keybinds failed to copy!", e);
+                AdvancedChatMacros.LOGGER.warn("Example Keybinds failed to copy!", e);
             }
         }
 
@@ -71,7 +70,7 @@ public class KeybindManager implements IKeybindProvider, IKeyboardInputHandler, 
         try {
             lines = Files.readAllLines(keyBindFile.toPath());
         } catch (IOException e) {
-            AdvancedChatMacros.LOGGER.log(Level.WARN, "Could not read keybinds.knst!", e);
+            AdvancedChatMacros.LOGGER.warn("Could not read keybinds.knst!", e);
             return;
         }
         String text = String.join("\n", lines);
@@ -85,7 +84,7 @@ public class KeybindManager implements IKeybindProvider, IKeyboardInputHandler, 
         try {
             multiple = MultipleNodeProcessor.fromString(processor, MultipleNodeSettings.DEFAULT, text);
         } catch (NodeException e) {
-            AdvancedChatMacros.LOGGER.log(Level.WARN, "Malformed Konstruct in keybinds.knst!", e);
+            AdvancedChatMacros.LOGGER.warn("Malformed Konstruct in keybinds.knst!", e);
             SETTING_UP = false;
             return;
         }

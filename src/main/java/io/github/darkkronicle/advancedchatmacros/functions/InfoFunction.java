@@ -7,8 +7,8 @@ import io.github.darkkronicle.Konstruct.parser.IntRange;
 import io.github.darkkronicle.Konstruct.parser.ParseContext;
 import io.github.darkkronicle.Konstruct.parser.Result;
 import io.github.darkkronicle.advancedchatmacros.config.KeybindManager;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.LiteralText;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
@@ -23,8 +23,9 @@ public class InfoFunction implements NamedFunction {
     public Result parse(ParseContext context, List<Node> input) {
         Result res = Function.parseArgument(context, input, 0);
         if (Function.shouldReturn(res)) return res;
-        if (!KeybindManager.SETTING_UP && MinecraftClient.getInstance().player != null) {
-            MinecraftClient.getInstance().player.sendMessage(new LiteralText(res.getContent().getString()), false);
+        if (!KeybindManager.SETTING_UP && Minecraft.getInstance().player != null) {
+            // 26.2: LiteralText removed -> Component.literal; sendMessage(Text, boolean) -> sendSystemMessage(Component)
+            Minecraft.getInstance().player.sendSystemMessage(Component.literal(res.getContent().getString()));
         }
         return Result.success("");
     }
