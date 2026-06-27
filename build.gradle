@@ -68,7 +68,7 @@ java {
 }
 
 jar {
-    from 'LICENSE'
+    from 'LICENSE.txt'
 }
 
 publishing {
