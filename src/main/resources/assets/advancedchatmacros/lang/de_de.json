@@ -1,0 +1,15 @@
+{
+  "advancedchatmacros.config.general.konstructenabled": "Konstruct-Chatnachrichten",
+  "advancedchatmacros.screen.processor": "Prozessor „Nachricht senden“",
+  "advancedchatmacros.config.general.info.konstructenabled": "Chatnachrichten werden durch Konstruct verarbeitet.\nhttps://darkkronicle.github.io/Konstruct",
+  "advancedchatmacros.config.general.preventrecursion": "Filter-Rekursion verhindern",
+  "advancedchatmacros.config.general.info.preventrecursion": "Wenn die gesendete Rohnachricht das Ergebnis erneut auslösen würde,\nwird das Senden der Nachricht gestoppt.",
+  "advancedchatmacros.matchprocessor": "Nachricht senden",
+  "advancedchatmacros.info.matchprocessor": "Sendet eine Chatnachricht. Kann eine Verzögerung haben und ein Befehl sein.",
+  "advancedchatmacros.matchprocessor.command": "Nachricht",
+  "advancedchatmacros.matchprocessor.info.command": "Welche Nachricht im Chat gesendet wird. {input} ist die ursprüngliche Nachricht.\nWird mit Konstruct formatiert.\nhttps://darkkronicle.github.io/Konstruct",
+  "advancedchatmacros.matchprocessor.delay": "Verzögerung",
+  "advancedchatmacros.matchprocessor.info.delay": "Verzögerung in Ticks, bis die Nachricht gesendet wird.",
+  "advancedchatmacros.matchprocessor.parseaskonstruct": "Als reines Konstruct interpretieren",
+  "advancedchatmacros.matchprocessor.info.parseaskonstruct": "Interpretiert den Wert als reines Konstruct. Die Variable „input“ ist die Chatnachricht.\nWenn deaktiviert, kann weiterhin [[eval]] genutzt werden,\num Konstruct auszuwerten. Siehe Macros-Wiki für mehr Infos."
+}
